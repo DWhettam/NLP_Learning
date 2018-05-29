@@ -18,10 +18,17 @@ class VoteClassifier(ClassifierI):
         for c in self._classifiers:
             v = c.classify(features)
             votes.append(v)
-        choice_votes = votes.count(mode(votes))
-        conf = float(choice_votes)/len(votes)
-        return mode(votes), conf
+        return mode(votes)
 
+    def confidence(self, features):
+        votes = []
+        for c in self._classifiers:
+            v = c.classify(features)
+            votes.append(v)
+
+        choice_votes = votes.count(mode(votes))
+        conf = choice_votes / len(votes)
+        return conf
 
 documents = [(list(movie_reviews.words(fileid)), category)
             for category in movie_reviews.categories()
@@ -47,7 +54,7 @@ def find_features(document):
 featuresets = [(find_features(rev), category) for (rev, category) in documents]
 
 training_set = featuresets[:1900]
-testing_set = featuresets[:1900]
+testing_set = featuresets[1900:]
 
 #classifier = nltk.NaiveBayesClassifier.train(training_set)
 
@@ -76,10 +83,6 @@ print("SGD_Classifier accuracy:", nltk.classify.accuracy(SGD_Classifier, testing
 SVC_Classifier = SklearnClassifier(SVC())
 SVC_Classifier.train(training_set)
 print("SVC_Classifier accuracy:", nltk.classify.accuracy(SVC_Classifier, testing_set) * 100, "%")
-#
-# LinearSVC_Classifier = SklearnClassifier(LinearSVC())
-# LinearSVC_Classifier.train(training_set)
-# print("LinearSVC_Classifier accuracy:", nltk.classify.accuracy(LinearSVC_Classifier, testing_set) * 100, "%")
 
 NuSVC_Classifier = SklearnClassifier(NuSVC())
 NuSVC_Classifier.train(training_set)
@@ -96,13 +99,6 @@ voted_classifier = VoteClassifier(classifier,
                                     NuSVC_Classifier)
 
 print("Voted classifer accuracy:", (nltk.classify.accuracy(voted_classifier, testing_set)) * 100, "%")
-classification, confidence = voted_classifier.classify(testing_set[0][0])
-print("Classification: ", classification, "%. Confidence: ", confidence*100, "%")
-classification, confidence = voted_classifier.classify(testing_set[1][0])
-print("Classification: ", classification, "%. Confidence: ", confidence*100, "%")
-classification, confidence = voted_classifier.classify(testing_set[2][0])
-print("Classification: ", classification, "%. Confidence: ", confidence*100, "%")
-classification, confidence = voted_classifier.classify(testing_set[3][0])
-print("Classification: ", classification, "%. Confidence: ", confidence*100, "%")
-classification, confidence = voted_classifier.classify(testing_set[4][0])
+classification = voted_classifier.classify(testing_set[0][0])
+confidence = voted_classifier.confidence(testing_set[0][0])
 print("Classification: ", classification, "%. Confidence: ", confidence*100, "%")
